@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 
@@ -27,6 +28,7 @@ namespace KafkaDebugger.Services
             Producer = new ProducerBuilder<Null, string>(ProducerConfig).Build();
             Random = new Random();
             Message = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data/kafka_message.json"));
+            Console.WriteLine($"Message size: {ASCIIEncoding.ASCII.GetByteCount(Message)} (ASCII), {ASCIIEncoding.UTF8.GetByteCount(Message)} (UTF-8)");
             Topic = topic;
         }
 
