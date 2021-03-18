@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -6,29 +8,43 @@ using Confluent.Kafka;
 
 namespace KafkaDebugger.Services
 {
-    public interface IKafkaProducerService {}
-    public class KafkaProducerService : IKafkaProducerService {
+    public interface IKafkaProducerService { }
+    public class KafkaProducerService : IKafkaProducerService
+    {
         private Random Random { get; set; }
         private ProducerConfig ProducerConfig { get; set; }
         private IProducer<Null, string> Producer { get; set; }
+        private string Message { get; set; }
         private string Topic { get; set; }
-        public KafkaProducerService(string bootstrapServers, string topic) {
-            ProducerConfig = new ProducerConfig {
+        public KafkaProducerService(string bootstrapServers, string topic)
+        {
+            ProducerConfig = new ProducerConfig
+            {
                 BootstrapServers = bootstrapServers,
                 ClientId = Dns.GetHostName(),
+                // LingerMs= 200,
             };
             Producer = new ProducerBuilder<Null, string>(ProducerConfig).Build();
             Random = new Random();
+            Message = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data/kafka_message.json"));
             Topic = topic;
         }
 
-        public async Task ProduceAsync() {
-            string payload = $"[{DateTime.Now.ToString("yyyy-mm-dd HH:MM:ss")}] {RandomString(5)}";
-            await Producer.ProduceAsync(Topic, new Message<Null, string> { Value = payload });
-            Console.WriteLine($"On topic: {Topic}, produced message: {payload}");
+        public async Task ProduceAsync()
+        {
+            // string payload = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] {RandomString(5)}";
+            List<Task> taskList = new List<Task>();
+            Console.WriteLine("Producing messages...");
+            foreach (int n in Enumerable.Range(1, 1000000))
+            {
+                taskList.Add(Producer.ProduceAsync(Topic, new Message<Null, string> { Value = Message }));
+                // Console.WriteLine($"On topic: {Topic}, produced message: {n}");
+            }
+            await Task.WhenAll(taskList);
         }
 
-        public string RandomString(int length) {
+        public string RandomString(int length)
+        {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length).Select(s => s[Random.Next(s.Length)]).ToArray());
         }

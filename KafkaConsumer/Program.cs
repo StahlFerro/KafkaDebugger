@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
-using System.Net;
-
 
 namespace KafkaConsumer
 {
@@ -21,7 +20,7 @@ namespace KafkaConsumer
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
             using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
-            List<string> topics = new List<string>() { "meters" };
+            List<string> topics = new List<string>() { args[2] };
             consumer.Subscribe(new List<string> { args[2] });
 
             CancellationTokenSource cts = new CancellationTokenSource();
