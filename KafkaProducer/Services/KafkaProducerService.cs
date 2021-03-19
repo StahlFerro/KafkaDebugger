@@ -23,7 +23,9 @@ namespace KafkaDebugger.Services
             {
                 BootstrapServers = bootstrapServers,
                 ClientId = Dns.GetHostName(),
-                // LingerMs= 200,
+                LingerMs = 200,
+                BatchSize = 32768,
+                CompressionType = CompressionType.Lz4,
             };
             Producer = new ProducerBuilder<Null, string>(ProducerConfig).Build();
             Random = new Random();
