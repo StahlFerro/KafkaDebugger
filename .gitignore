@@ -365,4 +365,5 @@ FodyWeavers.xsd
 # VSCode
 .vscode/*
 *.code-workspace
+appsettings.json
 KafkaProducer/Data/kafka_message.json
