@@ -17,18 +17,16 @@ namespace KafkaProducer.Services
     public class KafkaProducerService : IKafkaProducerService
     {
         private Random Random { get; set; }
-        private ProducerConfig ProducerConfig { get; set; }
+        // private ProducerConfig ProducerConfig {get;set;}
         private IProducer<Null, string> Producer { get; set; }
         private string Message { get; set; }
         private string Topic { get; set; }
 
         public int MaxParallelProductionThreads { get; set; }
         private readonly ILogger<KafkaProducerService> _logger;
-        public KafkaProducerService(AppSettings appSettings, KafkaSettings kafkaSettings, ILogger<KafkaProducerService> logger)
-        {
-            _logger = logger;
+        public IProducer<Null, string> BuildProducer(AppSettings appSettings, KafkaSettings kafkaSettings) {
             string bootstrapServers = kafkaSettings.BootstrapServers;
-            ProducerConfig = new ProducerConfig
+            ProducerConfig prodConf = new ProducerConfig
             {
                 BootstrapServers = bootstrapServers,
                 ClientId = Dns.GetHostName(),
@@ -37,9 +35,15 @@ namespace KafkaProducer.Services
                 CompressionType = CompressionType.Lz4,
             };
             Topic = kafkaSettings.TopicName;
-            Producer = new ProducerBuilder<Null, string>(ProducerConfig).Build();
-            MaxParallelProductionThreads = kafkaSettings.MaxParallelProductionThreads;
             _logger.LogInformation($"Created producer with bootstrapservers: {bootstrapServers} and topic {Topic}");
+            return new ProducerBuilder<Null, string>(prodConf).Build();
+
+        }
+        public KafkaProducerService(AppSettings appSettings, KafkaSettings kafkaSettings, ILogger<KafkaProducerService> logger)
+        {
+            _logger = logger;
+            Producer = BuildProducer(appSettings, kafkaSettings);
+            MaxParallelProductionThreads = kafkaSettings.MaxParallelProductionThreads;
         }
 
         public async Task ProduceAsync(string message)
