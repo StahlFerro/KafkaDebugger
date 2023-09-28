@@ -1,7 +1,6 @@
 using CommunityToolkit.HighPerformance;
 using Confluent.Kafka;
 using Avro;
-using SolTechnology.Avro;
 using Avro.Reflect;
 using Avro.IO;
 using KafkaCommon.Generated;
@@ -83,27 +82,5 @@ public class InferredSensorDataAvroAsyncDeserializer : IAsyncDeserializer<Inferr
             return sensorData;
         });
         return derRes;
-    }
-}
-
-
-public class SensorDataAvroSolTechnologyAsyncSerializer : IAsyncSerializer<SensorData>
-{
-    private Schema? _schema;
-
-    public SensorDataAvroSolTechnologyAsyncSerializer(string schemaFilePath)
-    {
-        string json = File.ReadAllText(schemaFilePath);
-        _schema = Schema.Parse(json);
-    }
-
-    public Task<byte[]> SerializeAsync(SensorData data, SerializationContext context)
-    {
-        Task<byte[]> serRes = Task.Run(() =>
-        {
-            byte[] buf = AvroConvert.Serialize(data, CodecType.Brotli);
-            return buf;
-        });
-        return serRes;
     }
 }
