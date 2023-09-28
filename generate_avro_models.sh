@@ -1,1 +1,1 @@
-avrogen -s ./KafkaCommon/Schemas/InferredSensorDataAvroSchema.json .
+avrogen -s ./KafkaCommon/Schemas/InferredSensorDataAvroSchema.avsc .
