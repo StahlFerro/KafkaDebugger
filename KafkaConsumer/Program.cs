@@ -1,55 +1,69 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Confluent.Kafka;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 
-namespace KafkaConsumer
+namespace KafkaConsumer;
+
+public class Program
 {
-    class Program
+
+    public static async Task Main(string[] args)
     {
-        static void Main(string[] args)
+        var hostBuilder = Host.CreateApplicationBuilder(args);
+
+        AddConfiguration(ref hostBuilder, args);
+        AddLogging(ref hostBuilder);
+        AddOptions(ref hostBuilder);
+        AddServices(ref hostBuilder);
+
+        var host = hostBuilder.Build();
+        EvaluateServices(host.Services);
+
+        await host.RunAsync();
+    }
+
+    public static void AddConfiguration(ref HostApplicationBuilder hostBuilder, string[] args)
+    {
+        hostBuilder.Configuration.Sources.Clear();
+        var configuration = new ConfigurationBuilder()
+            .AddEnvironmentVariables()
+            .AddCommandLine(args)
+            .AddJsonFile("./appsettings.json")
+            .Build();
+        hostBuilder.Configuration.AddConfiguration(configuration);
+    }
+
+    public static void AddOptions(ref HostApplicationBuilder hostBuilder)
+    {
+        hostBuilder.Services.Configure<AppOptions>(hostBuilder.Configuration.GetSection(nameof(AppOptions)));
+    }
+
+    public static void AddServices(ref HostApplicationBuilder hostBuilder)
+    {
+        hostBuilder.Services.AddSingleton<IConsumerService, ConsumerService>();
+    }
+
+    public static void AddLogging(ref HostApplicationBuilder hostBuilder)
+    {
+        hostBuilder.Logging.ClearProviders();
+        var nlogOptions = new NLogProviderOptions
         {
-            var config = new ConsumerConfig
-            {
-                BootstrapServers = args[0],
-                GroupId = args[1],
-                AutoOffsetReset = AutoOffsetReset.Earliest
-            };
-            using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
-            List<string> topics = new List<string>() { args[2] };
-            consumer.Subscribe(new List<string> { args[2] });
+            ReplaceLoggerFactory = true,
+            AutoShutdown = true,
+        };
+        var config = new ConfigurationBuilder()
+            // .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .Build();
+        hostBuilder.Logging.SetMinimumLevel(LogLevel.Trace);
+        hostBuilder.Logging.AddNLog(config);
+    }
 
-            CancellationTokenSource cts = new CancellationTokenSource();
-            Console.CancelKeyPress += (_, e) =>
-            {
-                e.Cancel = true; // prevent the process from terminating.
-                cts.Cancel();
-            };
-
-            try
-            {
-                while (true)
-                {
-                    try
-                    {
-                        var cr = consumer.Consume(cts.Token);
-                        Console.WriteLine($"Consumed message '{cr.Message.Value}' at: '{cr.TopicPartitionOffset}'.");
-                    }
-                    catch (ConsumeException e)
-                    {
-                        Console.WriteLine($"Error occured: {e.Error.Reason}");
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // Close and Release all the resources held by this consumer  
-                consumer.Close();
-            }
-        }
+    public static void EvaluateServices(IServiceProvider serviceProvider)
+    {
+        var consumerService = (ConsumerService)(serviceProvider.GetService<IConsumerService>() ?? throw new ArgumentNullException());
+        // var logger = serviceProvider.GetService<ILogger<Program>>() ?? throw new ArgumentNullException();
+        // Console.WriteLine(MainService.GetSystemEval());
     }
 }

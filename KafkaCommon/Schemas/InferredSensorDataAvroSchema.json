@@ -1,0 +1,54 @@
+{
+  "type": "record",
+  "name": "InferredSensorData",
+  "namespace": "KafkaCommon.Generated",
+  "fields": [
+    {
+      "name": "Id",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "TimeStamp",
+      "type": {
+        "type": "long",
+        "logicalType": "local-timestamp-micros"
+      }
+    },
+    {
+      "name": "Temperature",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 6,
+        "scale": 2
+      }
+    },
+    {
+      "name": "Humidity",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 6,
+        "scale": 2
+      }
+    },
+    {
+      "name": "BatteryLevel",
+      "type": [
+        "null",
+        {
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "name": "ExtraPayload",
+      "type": {
+        "type": "bytes"
+      }
+    }
+  ]
+}
